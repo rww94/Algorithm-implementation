@@ -1,0 +1,117 @@
+/********************************************************
+Description: Hidden Markov Model(HMM) and Viterbi's decoding Algorithm 
+Author:Rosun
+Date:2016.10.28
+********************************************************/
+#include<iostream>
+#include<iomanip>
+using namespace std;
+#define NumState 2  //状态数量 A B 
+#define NumViewValue  6//观测值种类数 
+#define ViewSequnceLength  10//观测到的序列长度 
+void Viterbi_Algorithm(float A[][NumState],float B[][NumViewValue],float Pi[],int Y[]); 
+int main(){
+    float A[NumState][NumState]={{0.8,0.2},
+                                 {0.1,0.9}};//状态转移矩阵
+    cout<<"输出转移矩阵A:"<<endl;
+    for(int i=0;i<NumState;i++){
+        for(int j=0;j<NumState;j++){
+            cout<<setw(4)<<A[i][j]<<" ";
+        }
+        cout<<endl;
+    }
+    float B[NumState][NumViewValue]={{1.0/6,1.0/6,1.0/6,1.0/6,1.0/6,1.0/6,},
+                                    {1.0/10,1.0/10,1.0/10,1.0/10,3.0/10,3.0/10,}};//B矩阵 
+    cout<<"输出矩阵B:"<<endl;
+    for(int i=0;i<NumState;i++){
+        for(int j=0;j<NumViewValue;j++){
+            cout<<setw(10)<<B[i][j]<<" ";
+        }
+        cout<<endl;
+    }
+    float Pi[NumState]={0.6,0.4};//初始各状态分布矩阵
+    cout<<"输出初始状态分布："<<endl;
+    for(int i=0;i<NumState;i++)
+        cout<<setw(4)<<Pi[i]<<" ";
+    cout<<endl; 
+    int Y[ViewSequnceLength]={1,3,4,5,5,6,6,3,2,6};//观测序列 
+    Viterbi_Algorithm(A, B,Pi,Y);
+    return 0;
+}
+void Viterbi_Algorithm(float A[][NumState],float B[][NumViewValue],float Pi[],int Y[]){
+    float delta[ViewSequnceLength][NumState];
+    delta[0][0]=Pi[0]*B[0][0];
+    delta[0][1]=Pi[1]*B[1][0];
+    int path[ViewSequnceLength][NumState];
+    path[0][0]=0;path[0][1]=0;
+    //迭代 
+    for(int t=1;t<ViewSequnceLength;t++){
+        for(int j=0;j<NumState;j++){
+            float tempMax=0.0;
+            int flag_i=0;
+            for(int i=0;i<NumState;i++){
+                if(delta[t-1][i]*A[i][j]>tempMax){
+                    tempMax=delta[t-1][i]*A[i][j];
+                    flag_i=i;
+
+                }
+
+            }
+            delta[t][j]=tempMax*B[j][Y[t]-1];
+            path[t][j]=flag_i;  
+        }
+    } 
+    //终止 求出最大概率 
+    int X[ViewSequnceLength];
+    X[ViewSequnceLength-1]=0;
+    float p=delta[ViewSequnceLength-1][0];
+    for(int i=1;i<NumState;i++){
+        if(delta[ViewSequnceLength-1][i]>p){
+                p=delta[ViewSequnceLength-1][i];
+                X[ViewSequnceLength-1]=i;
+
+        }   
+    }
+    cout<<"Max_probablity="<<p<<endl;
+    //回溯
+    for(int t=ViewSequnceLength-2;t>=0;t--){
+        X[t]=path[t+1][X[t+1]];
+
+    } 
+    //信息输出 
+    cout<<endl;
+    float result;
+    cout<<"各时刻具体情况："<<endl;
+    for(int t=0;t<ViewSequnceLength;t++){
+        cout<<"时刻t="<<t<<" ";
+        for(int j=0;j<NumState;j++){
+                cout<<setw(18)<<delta[t][j]<<" ";
+            }
+            cout<<endl;
+    }
+    cout<<"输出隐含过程："<<endl; 
+    for(int t=0;t<ViewSequnceLength;t++){
+            cout<<setw(4)<<X[t]<<" ";
+    }
+    char charX[ViewSequnceLength];
+    for(int t=0;t<ViewSequnceLength;t++){
+        if(X[t]==0)
+            charX[t]='A';
+        else 
+            charX[t]='B';
+    }
+    cout<<endl;
+    for(int t=0;t<ViewSequnceLength;t++){
+            cout<<setw(4)<<charX[t]<<" ";
+    }
+    cout<<endl<<"输出观测序列："<<endl;
+    for(int t=0;t<ViewSequnceLength;t++){
+            cout<<setw(4)<<Y[t]<<" ";
+    }
+
+}
+--------------------- 
+作者：Rosun_ 
+来源：CSDN 
+原文：https://blog.csdn.net/Mr_KkTian/article/details/52960546 
+版权声明：本文为博主原创文章，转载请附上博文链接！
